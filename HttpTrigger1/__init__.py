@@ -16,25 +16,33 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
     logging.info('Python HTTP trigger function processed a request.')
 
     curr_filepath = Path(__file__).resolve().parent
-    SCOPES = ['https://www.googleapis.com/auth/bigquery']
-    SERVICE_ACCOUNT_FILE = f'{curr_filepath}/mixidea-91a20-000af8d05383.json'
+    SCOPES = ['https://www.googleapis.com/auth/bigquery']  
+    SERVICE_ACCOUNT_FILE = f'{curr_filepath}/mixidea-91a20-b46f8dcd017d.json'
     log = Table("mixidea-91a20.mixidea_data2.shared_log3")
 
     credentials = service_account.Credentials.from_service_account_file(SERVICE_ACCOUNT_FILE, scopes=SCOPES)
     bigquery_client = bigquery.Client(credentials=credentials, project=credentials.project_id)
 
-    
-    sql_expr = Query.from_(log).select("*").where(
-                log.user_name == 'Vincent'
-                ).get_sql(quote_char=None)
-    
-    logging.info(sql_expr)
-    logging.info('ssss dd')
 
-    raw_data = list(bigquery_client.query(sql_expr).result())
+    query = """
+        SELECT *
+        FROM `mixidea-91a20.mixidea_data2.shared_log3`
+        LIMIT 20
+    """
+    query_job = bigquery_client.query(query)  # Make an API request.
+    raw_data = list(query_job.result())
+    print("The query data:")
+    for row in raw_data:
+        logging.info(row)
+        user_name = row.get('user_name')
+        logging.info(user_name)
+        browser = row.get('browser')
+        logging.info(browser)
     
+
+
+   
     logging.info('ttt dd')
-    data: List[Log] = [Log(**item).dict() for item in raw_data]
 
 
     name = req.params.get('name')
